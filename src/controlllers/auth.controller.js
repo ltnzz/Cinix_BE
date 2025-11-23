@@ -1,14 +1,26 @@
-import prisma from "../../config/db.js";
+import prisma from "../config/db.js";
 import bcrypt from "bcrypt";
-import { formatDate } from "../../utils/days.js";
+import crypto from "crypto";
+import { formatDate } from "../utils/days.js";
+import { sendEmail } from "../service/send.email.js";
+import { linkEmailTemplate } from "../utils/templateEmail.js";
 
 export const regist = async (req, res) => {
     try {
         const { name, email, phone, password, confirm_password } = req.body;
 
+        if(!"@gmail") {
+            return res
+                .status(400)
+                .json({
+                    auth: false,
+                    message: "Email harus berakhiran @gmail.com"
+                })
+        }
+
         const checkEmail = await prisma.users.findUnique({ where: { email } });
 
-        if(!checkEmail) {
+        if(checkEmail) {
             return res
                 .status(400)
                 .json({
@@ -19,7 +31,7 @@ export const regist = async (req, res) => {
 
         const checkPhone = await prisma.users.findUnique({ where: { phone }});
 
-        if(!checkPhone) {
+        if(checkPhone) {
             return res
                 .status(400)
                 .json({
@@ -32,19 +44,22 @@ export const regist = async (req, res) => {
             data: {
                 name,
                 email,
-                password: bcrypt.hashSync(password, 10),
+                password: bcrypt.hashSync(password, 8),
                 phone,
-                created_at: formatDate(users.created_at),
-                updated_at: formatDate(users.updated_at)
             }
         });
+
+        const response = {
+            ...data,
+            created_at: formatDate(data.created_at),
+        }
 
         return res
             .status(201)
             .json({
                 auth: true,
                 message: `Akun atas nama ${name} berhasil dibuat.`,
-                data: { data }
+                data: { response },
             })
     } catch (err) {
         console.error(err)
@@ -61,9 +76,18 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const checkAccount = await prisma.users.findUnique({ where: { email } });
+        const user = await prisma.users.findUnique({ where: { email } });
 
-        if(!checkAccount) {
+        if(!"@gmail") {
+            return res
+                .status(400)
+                .json({
+                    auth: false,
+                    message: "Email harus berakhiran @gmail.com"
+                })
+        }
+
+        if(!user) {
             return res
                 .status(400)
                 .json({
@@ -72,7 +96,7 @@ export const login = async (req, res) => {
                 })
         }
 
-        const comparePassword = await bcrypt.compare(password, checkAccount.password);
+        const comparePassword = await bcrypt.compare(password, user.password);
 
         if(!comparePassword) {
             return res
@@ -83,15 +107,22 @@ export const login = async (req, res) => {
                 })
         }
 
+        req.session.user = {
+            id: user.id_user,
+            name: user.name,
+            email: user.email,
+            phone: user.phone
+        }
+
         return res
             .status(200)
             .json({
                 auth: true,
-                message: `Halo ${checkAccount.name}! Selamat datang di Cinix!`,
+                message: `Halo ${user.name}! Selamat datang di Cinix!`,
                 data: {
-                    name: checkAccount.name,
-                    email: checkAccount.email,
-                    phone: checkAccount.phone
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone
                 }
             })
     } catch (err) {
@@ -105,21 +136,140 @@ export const login = async (req, res) => {
     }
 }
 
-export const logout = async (req, res) => {
+export const forgotPassword = async (req, res) => {
     try {
-        return res
-            .status(200)
-            .json({
-                auth: true,
-                message: ` Logout Berhasil! Anda telah berhasil logout dari akun.`
-            })
+        const { email } = req.body;
+
+        const user = await prisma.users.findUnique({ where: { email }});
+        if (!user) {
+            return res.status(400).json({
+                auth: false,
+                message: "Email tidak terdaftar."
+            });
+        }
+
+        const record = await prisma.reset_pass.findUnique({ where: { email }});
+
+        const now = new Date();
+
+        if (record) {
+            if (record.attemps >= 3) {
+                const remaining = record.created_at.getTime() + 300000 - now.getTime();
+                const minutes = Math.ceil(remaining / 60000);
+
+                if (remaining > 0) {
+                    return res.status(429).json({
+                        message: `Percobaan melebihi batas. Coba lagi setelah ${minutes} menit`
+                    });
+                }
+            }
+        }
+
+        const token = crypto.randomBytes(32).toString("hex");
+
+        const reset = await prisma.reset_pass.upsert({
+            where: { email },
+            update: {
+                token,
+                expired_at: new Date(Date.now() + 300_000),
+                attemps: { increment: 1 },
+                created_at: new Date(),
+            },
+            create: {
+                email,
+                token,
+                expired_at: new Date(Date.now() + 300_000),
+                attemps: 1,
+            },
+        });
+
+        const resetLink = `${process.env.fe_origin}/auth/reset-password/${reset.token}`;
+
+        const html = linkEmailTemplate(resetLink, user.name);
+
+        await sendEmail({
+            to: email,
+            subject: "Reset Password Cinix",
+            html
+        });
+
+        return res.status(200).json({
+            auth: true,
+            message: `Permintaan reset password telah dikirim ke email ${email}`
+        });
+
     } catch (err) {
         console.error(err);
-        return res
-            .status(500)
-            .json({
-                auth: false,
-                message: "Gagal memproses permintaan. Silahkan coba lagi."
-            })
+        return res.status(500).json({
+            auth: false,
+            message: "Gagal memproses permintaan. Silahkan coba lagi."
+        });
     }
-}
+};
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { newPassword, confirmNewPassword } = req.body;
+
+        const record = await prisma.reset_pass.findUnique({ where: { token } });
+
+        if (!record) {
+            return res.status(400).json({ message: "Token tidak ditemukan." });
+        }
+
+        if (record.used) {
+            return res.status(400).json({ message: "Token sudah digunakan." });
+        }
+
+        if (record.expired_at.getTime() < Date.now()) {
+            return res.status(400).json({ message: "Token kadaluwarsa." });
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            return res.status(400).json({ message: "Konfirmasi password tidak sesuai." });
+        }
+
+        await prisma.users.update({
+            where: { email: record.email },
+            data: { password: bcrypt.hashSync(newPassword, 8) },
+        });
+
+        await prisma.reset_pass.update({
+            where: { token },
+            data: { used: true },
+        });
+
+        return res.status(200).json({ message: "Password berhasil diperbarui." });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Server error." });
+    }
+};
+
+export const logout = (req, res) => {
+    try {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({
+                auth: false,
+                message: "Gagal logout. Silahkan coba lagi.",
+                });
+            }
+            
+            res.clearCookie("connect.sid", { path: "/" });
+            return res.status(200).json({
+                auth: true,
+                message: "Logout berhasil! Anda telah keluar dari akun.",
+            });
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
+        auth: false,
+        message: "Gagal memproses permintaan. Silahkan coba lagi.",
+        });
+    }
+};

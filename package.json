@@ -1,21 +1,32 @@
 {
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
+    "nodemon": "^3.1.10",
+    "prisma": "^6.19.0"
   },
   "dependencies": {
-    "@prisma/client": "^6.18.0",
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^6.19.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "cloudinary": "^2.8.0",
+    "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
+    "cron": "^4.3.4",
+    "crypto": "^1.0.1",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-form-data": "^3.0.1",
+    "express-session": "^1.18.2",
     "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.2",
     "midtrans-client": "^1.4.3",
-    "nodemailer": "^7.0.10"
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.10",
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.1"
   },
   "name": "be",
   "version": "1.0.0",
@@ -24,7 +35,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "seed": "node src/config/seed.js"
   },
   "repository": {
     "type": "git",

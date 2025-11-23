@@ -13,15 +13,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model otp {
-  id_otp         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email          String
-  otp            String
-  expired_at     DateTime
-  created_at     DateTime  @default(now())
-  attempt        Int       @default(0)
-  is_verified    Boolean   @default(false)
-  cooldown_until DateTime?
+  model reset_pass {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String   @unique
+  token       String   @unique
+  attemps     Int      @default(0)
+  used        Boolean  @default(false)
+  expired_at  DateTime
+  created_at  DateTime @default(now())
 }
 
 model admins {
