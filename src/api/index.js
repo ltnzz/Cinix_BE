@@ -3,9 +3,9 @@ import bodyParser from 'body-parser';
 import FormData from "express-form-data"
 import cors from 'cors';
 import dotenv from "dotenv";
-import authRouter from "../src/routes/authRoute.js";
-import movieRouter from "../src/routes/movie.route.js";
-import { sessionConfig } from '../src/utils/sessions.js';
+import authRouter from "../routes/authRoute.js";
+import movieRouter from "../routes/movie.route.js";
+import { sessionConfig } from '../utils/sessions.js';
 import { cleanup } from './service/cron.js';
 
 const app = express();
