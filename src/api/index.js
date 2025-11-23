@@ -16,6 +16,15 @@ app.use(FormData.parse());
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 
+app.use(
+    cors({
+        origin: allowedOrigin,
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true
+    })
+);
+
 cleanup.start();
 
 app.use(bodyParser.json());
