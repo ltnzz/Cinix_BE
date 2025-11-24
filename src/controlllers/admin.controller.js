@@ -9,12 +9,16 @@ export const adminLogin = async (req, res) => {
 
         const admin = await prisma.admins.findUnique({ where: { email } });
         if (!admin) {
-            return res.status(401).json({ message: "Invalid email or password" });
+            return res.status(401).json({ message: "Email tidak ditemukan." });
         }
 
-        const match = await bcrypt.compare(password, admin.password);
-        if (!match) {
-            return res.status(401).json({ message: "Invalid email or password" });
+        // const match = await bcrypt.compare(password, admin.password);
+        // if (!match) {
+        //     return res.status(401).json({ message: "Password salah." });
+        // }
+
+        if (password !== admin.password) {
+            return res.status(401).json({ message: "Password salah." });
         }
 
         const token = jsonwebtoken.sign({
