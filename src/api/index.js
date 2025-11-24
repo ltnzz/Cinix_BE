@@ -1,6 +1,4 @@
     import express from 'express';
-    import bodyParser from 'body-parser';
-    import FormData from "express-form-data"
     import cors from 'cors';
     import dotenv from "dotenv";
     import cookieParser from 'cookie-parser';
@@ -14,7 +12,6 @@
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }))
     app.use(cookieParser());
-    app.use(FormData.parse());
 
     dotenv.config();
     const PORT = process.env.PORT || 3000;

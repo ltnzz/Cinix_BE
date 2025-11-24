@@ -17,10 +17,6 @@ export const adminLogin = async (req, res) => {
             return res.status(401).json({ message: "Password salah." });
         }
 
-        // if (password !== admin.password) {
-        //     return res.status(401).json({ message: "Password salah." });
-        // }
-
         const token = jsonwebtoken.sign({
             id: admin.id_admin,
             name: admin.name,
@@ -93,6 +89,8 @@ export const addMovie = async (req, res) => {
 };
 
 export const updateMovie = async (req, res) => {
+    console.log("req.file:", req.file);   // cek apakah file diterima
+    console.log("req.body:", req.body);
     try {
         const { id_movie } = req.params;
         const { title, description, genre, language, age_rating, duration, rating, trailer_url, release_date } = req.body;
@@ -128,13 +126,13 @@ export const updateMovie = async (req, res) => {
         }
 
         data.poster_url = posterResult.secure_url;
+        console.log("Upload sukses:", posterResult.secure_url);
         }
 
         const movie = await prisma.movies.update({
         where: { id_movie },
         data,
         });
-
         res.json(movie);
     } catch (err) {
         console.error(err);

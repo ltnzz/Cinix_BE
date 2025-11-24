@@ -1,11 +1,9 @@
-// middlewares/uploadValidator.js
 import multer from "multer";
 
-// Middleware general untuk upload file
 const uploadValidator = ({
     fieldName = "file",
     allowedTypes = ["image/jpeg", "image/png", "image/jpg"],
-  maxSize = 5 * 1024 * 1024, // 5MB
+  maxSize = 4 * 1024 * 1024,
 } = {}) => {
     const storage = multer.memoryStorage();
 
@@ -26,8 +24,10 @@ const uploadValidator = ({
         upload(req, res, (err) => {
         if (err) return res.status(400).json({ message: err.message });
 
-        // Jika tidak ada file, lanjut tanpa error
         if (!req.file) req.file = null;
+
+        console.log("req.file:", req.file);
+console.log("req.body:", req.body);
 
         next();
         });
