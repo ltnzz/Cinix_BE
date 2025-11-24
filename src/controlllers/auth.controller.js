@@ -1,9 +1,11 @@
 import prisma from "../config/db.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import jsonwebtoken from "jsonwebtoken";
 import { formatDate } from "../utils/days.js";
 import { sendEmail } from "../service/send.email.js";
 import { linkEmailTemplate } from "../utils/templateEmail.js";
+import path from "path";
 
 export const regist = async (req, res) => {
     try {
@@ -76,26 +78,27 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await prisma.users.findUnique({ where: { email } });
-
-        if(!"@gmail") {
+        
+        if(!email.endsWith("@gmail.com")) {
             return res
-                .status(400)
-                .json({
-                    auth: false,
-                    message: "Email harus berakhiran @gmail.com"
-                })
+            .status(400)
+            .json({
+                auth: false,
+                message: "Email harus berakhiran @gmail.com"
+            })
         }
+        
+        const user = await prisma.users.findUnique({ where: { email } });
 
         if(!user) {
             return res
-                .status(400)
-                .json({
-                    auth: false,
-                    message: "Akun tidak terdaftar."
-                })
+            .status(400)
+            .json({
+                auth: false,
+                message: "Akun tidak terdaftar."
+            })
         }
-
+        
         const comparePassword = await bcrypt.compare(password, user.password);
 
         if(!comparePassword) {
@@ -107,18 +110,39 @@ export const login = async (req, res) => {
                 })
         }
 
+        const token = jsonwebtoken.sign(
+            {
+                id: user.id_user,
+                name: user.name,
+                email: user.email,
+                role: "user"
+            },
+            process.env.jwt_secret,
+            { expiresIn: "1h"
+            }
+        )
+
         req.session.user = {
             id: user.id_user,
             name: user.name,
             email: user.email,
-            phone: user.phone
+            phone: user.phone,
+            role: "user",
         }
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000,
+        })
 
         return res
             .status(200)
             .json({
                 auth: true,
                 message: `Halo ${user.name}! Selamat datang di Cinix!`,
+                token,
                 data: {
                     name: user.name,
                     email: user.email,
@@ -230,9 +254,11 @@ export const resetPassword = async (req, res) => {
             return res.status(400).json({ message: "Konfirmasi password tidak sesuai." });
         }
 
+        const hasehedPassword = await bcrypt.hash(newPassword, 8);
+
         await prisma.users.update({
             where: { email: record.email },
-            data: { password: bcrypt.hashSync(newPassword, 8) },
+            data: { password: hasehedPassword },
         });
 
         await prisma.reset_pass.update({
@@ -250,21 +276,24 @@ export const resetPassword = async (req, res) => {
 
 export const logout = (req, res) => {
     try {
-        req.session.destroy((err) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json({
-                auth: false,
-                message: "Gagal logout. Silahkan coba lagi.",
-                });
-            }
-            
-            res.clearCookie("connect.sid", { path: "/" });
-            return res.status(200).json({
-                auth: true,
-                message: "Logout berhasil! Anda telah keluar dari akun.",
-            });
+        res.clearCookie("connect.sid", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
+            path: "/",
+        })
+
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            path: "/",
         });
+
+        return res.status(200).json({
+            auth: false,
+            message: "Logout berhasil. Sampai jumpa lagi!",
+        })
     } catch (err) {
         console.error(err);
         return res.status(500).json({
