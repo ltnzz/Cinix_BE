@@ -1,7 +1,54 @@
-// src/controllers/admin.controller.js
-import id from "dayjs/locale/id.js";
 import prisma from "../config/db.js";
 import cloudinary from "../service/cloudinary.js";
+import bcrypt from "bcrypt";
+import jsonwebtoken from "jsonwebtoken";
+
+export const adminLogin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const admin = await prisma.admins.findUnique({ where: { email } });
+        if (!admin) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        const match = await bcrypt.compare(password, admin.password);
+        if (!match) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        const token = jsonwebtoken.sign({
+            id: admin.id_admin,
+            name: admin.name,
+            email: admin.email,
+            isAdmin: true            
+        }, process.env.jwt_secret, { expiresIn: "6h"})
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Strict",
+            maxAge: 6 * 60 * 60 * 1000,
+        })
+
+        return res.json({ 
+            message: `Halo ${admin.name}. Selamat datang di dashboard admin.`,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+export const adminLogout = (req, res) => {
+    try {
+        res.clearCookie("token");
+        res.json({ message: "Logout Berhasil!" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+}
 
 export const addMovie = async (req, res) => {
     try {
