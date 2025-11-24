@@ -12,14 +12,14 @@ export const adminLogin = async (req, res) => {
             return res.status(401).json({ message: "Email tidak ditemukan." });
         }
 
-        // const match = await bcrypt.compare(password, admin.password);
-        // if (!match) {
-        //     return res.status(401).json({ message: "Password salah." });
-        // }
-
-        if (password !== admin.password) {
+        const match = await bcrypt.compare(password, admin.password);
+        if (!match) {
             return res.status(401).json({ message: "Password salah." });
         }
+
+        // if (password !== admin.password) {
+        //     return res.status(401).json({ message: "Password salah." });
+        // }
 
         const token = jsonwebtoken.sign({
             id: admin.id_admin,
