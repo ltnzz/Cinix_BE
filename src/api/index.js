@@ -15,12 +15,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 app.use(FormData.parse());
 app.use(cookieParser());
-cleanup.start();
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 
-const allowedOrigin = ["https://CINIX-FE.vercel.app", "http://localhost:5173"];
+const allowedOrigin = ["https://CINIX-FE.vercel.app", "http://localhost:5432"];
 
 app.use(
     cors({
@@ -31,6 +30,7 @@ app.use(
     })
 );
 
+cleanup.start();
 
 app.get('/', (req, res) => {
     res.send('Cinix berjalan di Server.');
