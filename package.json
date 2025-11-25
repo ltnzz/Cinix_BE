@@ -37,6 +37,7 @@
     "start": "node src/api/index.js",
     "dev": "nodemon src/api/index.js",
     "seed": "node src/config/seed.js"
+    
   },
   "repository": {
     "type": "git",

@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = env("DATABASE_URL")
 }
 
   model reset_pass {
@@ -36,7 +36,7 @@ model admins {
 
 model movies {
   id_movie        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title           String
+  title           String    @unique
   description     String?
   genre           String?
   language        String?
@@ -44,6 +44,7 @@ model movies {
   duration        Int?
   rating          Float?
   poster_url      String?
+  poster_publicId String?
   trailer_url     String?
   release_date    DateTime?
   movie_update_by String?
