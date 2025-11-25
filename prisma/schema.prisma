@@ -37,7 +37,6 @@ model movies {
   duration        Int?
   rating          Float?
   poster_url      String?
-  poster_publicId String?
   trailer_url     String?
   release_date    DateTime?
   movie_update_by String?
