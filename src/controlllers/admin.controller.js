@@ -89,8 +89,6 @@ export const addMovie = async (req, res) => {
 };
 
 export const updateMovie = async (req, res) => {
-    console.log("req.file:", req.file);   // cek apakah file diterima
-    console.log("req.body:", req.body);
     try {
         const { id_movie } = req.params;
         const { title, description, genre, language, age_rating, duration, rating, trailer_url, release_date } = req.body;

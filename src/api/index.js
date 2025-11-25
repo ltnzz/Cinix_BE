@@ -7,7 +7,8 @@ import authRouter from "../routes/authRoute.js";
 import movieRouter from "../routes/movie.route.js";
 import adminRouter from "../routes/admin.route.js"; 
 import userRouter from '../routes/user.route.js';
-import seatRoutes from '../routes/seatRoutes.js'; 
+import seatRouter from '../routes/seatRoutes.js'; 
+import midtransRouter from '../routes/midtrans.route.js';
 
 import { cleanup } from '../service/cron.js';
 
@@ -40,7 +41,8 @@ app.use("/", authRouter);
 app.use("/", movieRouter);
 app.use("/", adminRouter); 
 app.use("/", userRouter);
-app.use("/", seatRoutes); 
+app.use("/", seatRouter);
+app.use("/", midtransRouter); 
 
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);

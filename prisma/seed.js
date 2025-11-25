@@ -1,122 +1,151 @@
+// prisma/seed.js
 import prisma from "../src/config/db.js";
-
-// ID statis agar seeding bisa diulang tanpa error foreign key
-const THEATER_ID = "66a01860-2621-4d37-8898-1e434f3c7e7e"; 
-const STUDIO_ID = "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"; 
+import bcrypt from "bcrypt";
 
 async function main() {
-  console.log('Memulai Seeding Database...');
-
-  // --- 1. SEED THEATER (Prasyarat Studio) ---
-  const theater = await prisma.theaters.upsert({
-    where: { id_theater: THEATER_ID },
-    update: {},
-    create: {
-      id_theater: THEATER_ID,
-      city: "Jakarta",
-      address: "Jl. Sudirman Kav. 52-53",
+  // 1. Admins
+  const passwordHash = await bcrypt.hash("admin123", 10);
+  const admin = await prisma.admins.create({
+    data: {
+      name: "Super Admin",
+      email: "admin@cinix.com",
+      password: passwordHash,
     },
   });
-  console.log(`✅ Theater Created/Found: ${theater.city}`);
 
-  // --- 2. SEED STUDIO (Prasyarat Seats) ---
-  const STUDIO_CAPACITY = 150; 
-  const studio = await prisma.studios.upsert({
-    where: { id_studio: STUDIO_ID },
-    update: {},
-    create: {
-      id_studio: STUDIO_ID,
-      theater_id: THEATER_ID,
-      name: "Studio 1 - Gold",
-      capacity: STUDIO_CAPACITY,
-    },
-  });
-  console.log(`✅ Studio Created/Found: ${studio.name}`);
+  // 2. Users
+  const userPassword = await bcrypt.hash("user123", 10);
+  const usersData = [
+    { name: "John Doe", email: "john@gmail.com", password: userPassword, phone: "081234567890" },
+    { name: "Jane Smith", email: "jane@gmail.com", password: userPassword, phone: "081234567891" },
+  ];
+  const users = [];
+  for (const u of usersData) {
+    users.push(await prisma.users.create({ data: u }));
+  }
 
-  // --- 3. SEED SEATS (Logika untuk mengisi tabel 'seats') ---
-  
-  // Baris dari atas ke bawah
-  const rows = ['K', 'J', 'I', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A']; 
-  const totalColumns = 15; 
-  const seatTypes = {
-    'K': 'VIP', 'J': 'VIP', 'I': 'Standard', 'H': 'Standard', 'G': 'Standard', 
-    'F': 'Standard', 'E': 'Couple', 'D': 'Couple', 'C': 'Standard', 'B': 'Standard', 'A': 'Standard'
-  };
+  // 3. Theaters & Studios & Seats
+  const theatersData = [
+    { city: "Jakarta", address: "Jl. Thamrin No.1", latitude: -6.193, longitude: 106.822 },
+    { city: "Bandung", address: "Jl. Braga No.21", latitude: -6.914, longitude: 107.609 },
+    { city: "Surabaya", address: "Jl. Tunjungan No.5", latitude: -7.257, longitude: 112.752 },
+  ];
 
-  const allSeats = [];
+  const theaters = [];
+  for (const theater of theatersData) {
+    const t = await prisma.theaters.create({ data: theater });
+    theaters.push(t);
 
-  for (const rowLetter of rows) {
-    for (let colNum = totalColumns; colNum >= 1; colNum--) {
-      const seatId = `${rowLetter}${colNum}`;
+    const studioNames = ["Studio A", "Studio B"];
+    for (const name of studioNames) {
+      const s = await prisma.studios.create({
+        data: {
+          theater_id: t.id_theater,
+          name,
+          capacity: 132,
+          layout_json: {},
+        },
+      });
 
-      allSeats.push({
-        studio_id: STUDIO_ID,
-        seat_number: seatId,
-        seat_type: seatTypes[rowLetter] || 'Standard',
-        is_available: true,
+      // Seats A-K, 1-12
+      const rows = "ABCDEFGHIJK".split("");
+      const seatsToCreate = [];
+      for (const row of rows) {
+        for (let n = 1; n <= 12; n++) {
+          seatsToCreate.push({
+            studio_id: s.id_studio,
+            seat_number: `${row}${n}`,
+            seat_type: "regular",
+            is_available: true,
+          });
+        }
+      }
+      await prisma.seats.createMany({ data: seatsToCreate });
+    }
+  }
+
+  // 4. Movies
+  const moviesData = [
+    { title: "Avengers: Endgame", genre: "Action", duration: 181, rating: 8.4 },
+    { title: "The Lion King", genre: "Animation", duration: 118, rating: 7.0 },
+  ];
+  const movies = [];
+  for (const m of moviesData) {
+    movies.push(await prisma.movies.create({ data: m }));
+  }
+
+  // 5. Schedules (random for each movie & studio)
+  const schedules = [];
+  for (const movie of movies) {
+    for (const theater of theaters) {
+      const studios = await prisma.studios.findMany({ where: { theater_id: theater.id_theater } });
+      for (const studio of studios) {
+        schedules.push(
+          await prisma.schedules.create({
+            data: {
+              movie_id: movie.id_movie,
+              theater_id: theater.id_theater,
+              studio_id: studio.id_studio,
+              admin_id: admin.id_admin,
+              show_date: new Date(),
+              show_time: new Date(),
+              price: 50000,
+            },
+          })
+        );
+      }
+    }
+  }
+
+  // 6. Bookings & Booking Seats
+  for (const user of users) {
+    const schedule = schedules[Math.floor(Math.random() * schedules.length)];
+    const booking = await prisma.bookings.create({
+      data: {
+        user_id: user.id_user,
+        schedule_id: schedule.id_schedule,
+        total_price: schedule.price * 2,
+      },
+    });
+
+    // ambil 2 seat acak dari studio schedule
+    const seatsInStudio = await prisma.seats.findMany({ where: { studio_id: schedule.studio_id } });
+    const selectedSeats = seatsInStudio.sort(() => 0.5 - Math.random()).slice(0, 2);
+    for (const seat of selectedSeats) {
+      await prisma.booking_seats.create({
+        data: {
+          booking_id: booking.id_booking,
+          seat_id: seat.id_seat,
+        },
       });
     }
   }
 
-  // Masukkan semua kursi ke database
-  const seatsCreated = await prisma.seats.createMany({
-    data: allSeats,
-    skipDuplicates: true,
-  });
-
-  console.log(`✅ Berhasil membuat ${seatsCreated.count} kursi dengan penamaan grid.`);
-  
-  // ------------------------------------------------------------------
-  // --- INI ADALAH KODE ASLI FILM DARI ANDA (menggunakan upsert) ---
-  // ------------------------------------------------------------------
-
-  await prisma.movies.upsert({
-      where: { title: "Interstellar" },
-      update: {},
-      create: {
-        title: "Interstellar",
-        description: "A sci-fi movie about space exploration.",
-        genre: "Sci-Fi",
-        language: "English",
-        age_rating: "PG-13",
-        duration: 169,
-        rating: 8.6,
-        poster_url: "https://res.cloudinary.com/demo/image/upload/interstellar.jpg",
-        trailer_url: "https://youtube.com/watch?v=zSWdZVtXT7E",
-        release_date: new Date("2014-11-07")
+  // 7. Payments (dummy)
+  const allBookings = await prisma.bookings.findMany();
+  for (const booking of allBookings) {
+    const user = users[Math.floor(Math.random() * users.length)];
+    const schedule = await prisma.schedules.findUnique({ where: { id_schedule: booking.schedule_id } });
+    await prisma.payments.create({
+      data: {
+        user_id: user.id_user,
+        movie_id: schedule.movie_id,
+        booking_id: booking.id_booking,
+        amount: booking.total_price,
+        payment_type: "bank_transfer",
+        status: "success",
       },
-  });
+    });
+  }
 
-  await prisma.movies.upsert({
-      where: { title: "Oppenheimer" },
-      update: {},
-      create: {
-        title: "Oppenheimer",
-        description: "Biography of J. Robert Oppenheimer.",
-        genre: "Drama",
-        language: "English",
-        age_rating: "R",
-        duration: 180,
-        rating: 8.4,
-        poster_url: "https://res.cloudinary.com/demo/image/upload/oppenheimer.jpg",
-        trailer_url: "https://youtube.com/watch?v=bK6ldnjE3Y0",
-        release_date: new Date("2023-07-21")
-      },
-  });
-  
-  // ------------------------------------------------------------------
-
-  console.log("Seeding selesai.");
+  console.log("✅ Seed selesai!");
 }
 
-main().catch((e) => {
-    console.error('--- ERROR SEEDING ---');
+main()
+  .catch((e) => {
     console.error(e);
     process.exit(1);
   })
   .finally(async () => {
-    // Menghapus koneksi database setelah semua operasi selesai
-    if (prisma && prisma.$disconnect) { 
-        await prisma.$disconnect();
-    }
+    await prisma.$disconnect();
   });
