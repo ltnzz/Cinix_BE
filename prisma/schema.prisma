@@ -50,6 +50,8 @@ model theaters {
   id_theater String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   city       String
   address    String
+  latitude   Float
+  longitude  Float
   created_at DateTime    @default(now())
   updated_at DateTime    @updatedAt
   schedules  schedules[]
