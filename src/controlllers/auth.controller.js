@@ -122,14 +122,6 @@ export const login = async (req, res) => {
             }
         )
 
-        req.session.user = {
-            id: user.id_user,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            role: "user",
-        }
-
         res.cookie("token", token, {
             httpOnly: true,
             secure: false,
