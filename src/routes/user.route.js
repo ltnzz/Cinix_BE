@@ -4,6 +4,6 @@ import { authenticate } from '../middlewares/validation/user.auth.js';
 
 const router = express.Router();
 
-router.get('/recommendations/:id_user', authenticate, getRecommendations);
+router.get('/recommendations', authenticate, getRecommendations);
 
 export default router;
