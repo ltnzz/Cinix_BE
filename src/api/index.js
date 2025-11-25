@@ -9,7 +9,6 @@ import adminRouter from "../routes/admin.route.js";
 import userRouter from '../routes/user.route.js';
 import seatRoutes from '../routes/seatRoutes.js'; 
 
-import { sessionConfig } from '../utils/sessions.js';
 import { cleanup } from '../service/cron.js';
 
 const app = express();
@@ -32,8 +31,6 @@ app.use(
 );
 
 cleanup.start();
-
-app.use(sessionConfig);
 
 app.get('/', (req, res) => {
     res.send('Cinix berjalan di Server.');

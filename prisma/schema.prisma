@@ -28,13 +28,8 @@ model admins {
 }
 
 model movies {
-<<<<<<< HEAD
   id_movie        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title           String    @unique
-=======
-  id_movie        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title           String
->>>>>>> 25f1cb51cc72e743eece0df1523f0e99c6396fe6
   description     String?
   genre           String?
   language        String?
