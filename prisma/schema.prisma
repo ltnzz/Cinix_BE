@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,30 +7,34 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
-  model reset_pass {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email       String   @unique
-  token       String   @unique
-  attemps     Int      @default(0)
-  used        Boolean  @default(false)
-  expired_at  DateTime
-  created_at  DateTime @default(now())
+model reset_pass {
+  email      String   @unique
+  expired_at DateTime
+  created_at DateTime @default(now())
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token      String   @unique
+  used       Boolean  @default(false)
+  attemps    Int      @default(0)
 }
 
 model admins {
-  id_admin   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_admin   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
-  email      String   @unique
+  email      String      @unique
   password   String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  schedules schedules[]
+  created_at DateTime    @default(now())
+  updated_at DateTime    @default(now()) @updatedAt
+  schedules  schedules[]
 }
 
 model movies {
+<<<<<<< HEAD
   id_movie        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title           String    @unique
+=======
+  id_movie        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String
+>>>>>>> 25f1cb51cc72e743eece0df1523f0e99c6396fe6
   description     String?
   genre           String?
   language        String?
@@ -48,102 +46,94 @@ model movies {
   trailer_url     String?
   release_date    DateTime?
   movie_update_by String?
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
-
-  schedules schedules[]
-  payments  payments[]
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  payments        payments[]
+  schedules       schedules[]
 }
 
 model theaters {
-  id_theater String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_theater String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   city       String
   address    String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  studios   studios[]
-  schedules schedules[]
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  schedules  schedules[]
+  studios    studios[]
 }
 
 model studios {
-  id_studio   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  theater_id  String   @db.Uuid
+  id_studio   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  theater_id  String      @db.Uuid
   name        String
   capacity    Int
   layout_json Json?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  theater   theaters    @relation(fields: [theater_id], references: [id_theater])
-  schedules schedules[]
-  seats     seats[]
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  schedules   schedules[]
+  seats       seats[]
+  theater     theaters    @relation(fields: [theater_id], references: [id_theater])
 }
 
 model schedules {
-  id_schedule        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  movie_id           String   @db.Uuid
-  studio_id          String   @db.Uuid
-  theater_id         String   @db.Uuid
-  admin_id           String?  @db.Uuid
+  id_schedule        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  movie_id           String     @db.Uuid
+  studio_id          String     @db.Uuid
+  theater_id         String     @db.Uuid
+  admin_id           String?    @db.Uuid
   show_date          DateTime
   show_time          DateTime
   price              Float
   schedule_update_by String?
-  created_at         DateTime @default(now())
-  updated_at         DateTime @updatedAt
-
-  movie    movies     @relation(fields: [movie_id], references: [id_movie])
-  studio   studios    @relation(fields: [studio_id], references: [id_studio])
-  theater  theaters   @relation(fields: [theater_id], references: [id_theater])
-  admin    admins?    @relation(fields: [admin_id], references: [id_admin])
-  bookings bookings[]
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
+  bookings           bookings[]
+  admin              admins?    @relation(fields: [admin_id], references: [id_admin])
+  movie              movies     @relation(fields: [movie_id], references: [id_movie])
+  studio             studios    @relation(fields: [studio_id], references: [id_studio])
+  theater            theaters   @relation(fields: [theater_id], references: [id_theater])
 }
 
 model seats {
-  id_seat      String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studio_id    String  @db.Uuid
+  id_seat      String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studio_id    String          @db.Uuid
   seat_number  String
   seat_type    String?
-  is_available Boolean @default(true)
-
-  studio       studios         @relation(fields: [studio_id], references: [id_studio])
+  is_available Boolean         @default(true)
   bookingSeats booking_seats[]
+  studio       studios         @relation(fields: [studio_id], references: [id_studio])
 }
 
 model users {
-  id_user    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_user    String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
-  email      String   @unique
+  email      String     @unique
   password   String
-  phone      String?  @unique
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  bookings bookings[]
-  payments payments[]
+  phone      String?    @unique
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  bookings   bookings[]
+  payments   payments[]
 }
 
 model bookings {
-  id_booking   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id      String   @db.Uuid
-  schedule_id  String   @db.Uuid
+  id_booking   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String          @db.Uuid
+  schedule_id  String          @db.Uuid
   total_price  Float
-  booking_time DateTime @default(now())
-
-  user         users           @relation(fields: [user_id], references: [id_user])
-  schedule     schedules       @relation(fields: [schedule_id], references: [id_schedule])
+  booking_time DateTime        @default(now())
   bookingSeats booking_seats[]
+  schedule     schedules       @relation(fields: [schedule_id], references: [id_schedule])
+  user         users           @relation(fields: [user_id], references: [id_user])
   payments     payments[]
 }
 
 model booking_seats {
-  id_booking_seats String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  booking_id       String @db.Uuid
-  seat_id          String @db.Uuid
-
-  booking bookings @relation(fields: [booking_id], references: [id_booking])
-  seat    seats    @relation(fields: [seat_id], references: [id_seat])
+  id_booking_seats String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  booking_id       String   @db.Uuid
+  seat_id          String   @db.Uuid
+  booking          bookings @relation(fields: [booking_id], references: [id_booking])
+  seat             seats    @relation(fields: [seat_id], references: [id_seat])
 }
 
 model payments {
@@ -164,8 +154,15 @@ model payments {
   gross_amount        Float?
   midtrans_response   Json?
   created_at          DateTime  @default(now())
+  booking             bookings  @relation(fields: [booking_id], references: [id_booking])
+  movie               movies    @relation(fields: [movie_id], references: [id_movie])
+  user                users     @relation(fields: [user_id], references: [id_user])
+}
 
-  user    users    @relation(fields: [user_id], references: [id_user])
-  movie   movies   @relation(fields: [movie_id], references: [id_movie])
-  booking bookings @relation(fields: [booking_id], references: [id_booking])
+model session {
+  sid    String   @id @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
 }
