@@ -1,9 +1,28 @@
 import prisma from "../config/db.js";
+import crypto from "crypto";
 
 export const midtransWebhook = async (req, res) => {
     try {
         const payload = req.body;
-        const { order_id, transaction_status } = payload;
+
+        const {
+        order_id,
+        transaction_status,
+        status_code,
+        gross_amount,
+        signature_key,
+        } = payload;
+
+        const serverKey = process.env.MIDTRANS_SERVER_KEY;
+
+        const expectedSignature = crypto
+        .createHash("sha512")
+        .update(order_id + status_code + gross_amount + serverKey)
+        .digest("hex");
+
+        if (expectedSignature !== signature_key) {
+        return res.status(403).json({ message: "Invalid signature" });
+        }
 
         const statusMap = {
         capture: "success",
@@ -11,29 +30,30 @@ export const midtransWebhook = async (req, res) => {
         pending: "pending",
         deny: "failed",
         cancel: "failed",
-        expire: "expired"
+        expire: "expired",
+        refund: "refunded",
         };
 
-        const payments = await prisma.payments.updateMany({
+        const mappedStatus = statusMap[transaction_status] || "pending";
+
+        const payment = await prisma.payments.update({
         where: { order_id },
-        data: { status: statusMap[transaction_status] || "pending", midtrans_response: payload }
+        data: {
+            status: mappedStatus,
+            midtrans_response: payload,
+        },
         });
 
-        if (transaction_status === "capture" || transaction_status === "settlement") {
-        const paymentRecords = await prisma.payments.findMany({ where: { order_id } });
-        for (const p of paymentRecords) {
-            if (p.booking_id) {
-            await prisma.bookings.update({
-                where: { id_booking: p.booking_id },
-                data: { status: "confirmed" }
-            });
-            }
-        }
+        if (mappedStatus === "success" && payment.booking_id) {
+        await prisma.bookings.update({
+            where: { id_booking: payment.booking_id },
+            data: { status: "confirmed" },
+        });
         }
 
         return res.status(200).json({ message: "Webhook processed" });
     } catch (err) {
-        console.error(err);
+        console.error("Webhook error:", err);
         return res.status(500).json({ message: "Webhook error" });
     }
 };
