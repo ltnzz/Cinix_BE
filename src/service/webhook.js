@@ -5,19 +5,21 @@ export const midtransWebhook = async (req, res) => {
     try {
         const payload = req.body;
 
-        const {
-        order_id,
-        transaction_status,
-        status_code,
-        gross_amount,
-        signature_key,
-        } = payload;
+        if (!payload || Object.keys(payload).length === 0) {
+        return res.status(400).json({ message: "Empty payload" });
+        }
+
+        const { order_id, gross_amount, signature_key, transaction_status, transaction_id, va_numbers } = payload;
+
+        if (!order_id || !gross_amount || !signature_key || !transaction_status) {
+        return res.status(400).json({ message: "Missing required fields" });
+        }
 
         const serverKey = process.env.MIDTRANS_SERVER_KEY;
-
+        const signatureString = order_id + payload.status_code + gross_amount + serverKey;
         const expectedSignature = crypto
         .createHash("sha512")
-        .update(order_id + status_code + gross_amount + serverKey)
+        .update(signatureString)
         .digest("hex");
 
         if (expectedSignature !== signature_key) {
@@ -33,27 +35,24 @@ export const midtransWebhook = async (req, res) => {
         expire: "expired",
         refund: "refunded",
         };
-
         const mappedStatus = statusMap[transaction_status] || "pending";
 
         const payment = await prisma.payments.update({
         where: { order_id },
         data: {
             status: mappedStatus,
+            transaction_id: transaction_id,
+            va_number: va_numbers?.[0]?.va_number || null,
             midtrans_response: payload,
+            gross_amount: parseFloat(gross_amount) || null,
+            currency: payload.currency || null,
+            transaction_time: transaction_status === "settlement" ? new Date(payload.settlement_time) : new Date(),
         },
         });
 
-        if (mappedStatus === "success" && payment.booking_id) {
-        await prisma.bookings.update({
-            where: { id_booking: payment.booking_id },
-            data: { status: "confirmed" },
-        });
-        }
-
         return res.status(200).json({ message: "Webhook processed" });
     } catch (err) {
-        console.error("Webhook error:", err);
-        return res.status(500).json({ message: "Webhook error" });
+        console.error("[WEBHOOK] Error:", err);
+        return res.status(500).json({ message: "Webhook error", error: err.message });
     }
 };

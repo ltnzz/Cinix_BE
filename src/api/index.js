@@ -11,6 +11,7 @@ import seatRouter from '../routes/seatRoutes.js';
 import midtransRouter from '../routes/midtrans.route.js';
 
 import { cleanup } from '../service/cron.js';
+import bodyParser from 'body-parser';
 
 const app = express();
 dotenv.config(); 
@@ -21,6 +22,7 @@ const allowedOrigin = ["https://CINIX-FE.vercel.app", "http://localhost:5173"];
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser()); 
+app.use(bodyParser.json());
 
 app.use(
     cors({

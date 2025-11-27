@@ -6,7 +6,6 @@ export const createTransaction = async (req, res) => {
     const { schedule_id, seats, amount } = req.body;
 
     const user_id = req.user?.id_user;
-
     if (!user_id) return res.status(401).json({ message: "Unauthorized" });
 
     if (!schedule_id || !seats || !amount) {
