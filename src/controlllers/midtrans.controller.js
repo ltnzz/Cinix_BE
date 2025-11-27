@@ -4,36 +4,32 @@ import { snap } from "../service/midtrans.js";
 export const createTransaction = async (req, res) => {
   try {
     const { schedule_id, seats, amount } = req.body;
-
     const user_id = req.user?.id_user;
     if (!user_id) return res.status(401).json({ message: "Unauthorized" });
+    if (!schedule_id || !seats || !amount) return res.status(400).json({ message: "Data tidak lengkap" });
 
-    if (!schedule_id || !seats || !amount) {
-      return res.status(400).json({ message: "Data tidak lengkap" });
-    }
-
-    let seatArray = seats;
-    if (typeof seats === "string") seatArray = seats.split(",");
-    if (!Array.isArray(seatArray) || seatArray.length === 0) {
-      return res.status(400).json({ message: "Seats harus berupa array" });
-    }
+    let seatArray = Array.isArray(seats) ? seats : seats.split(",");
+    if (!seatArray.length) return res.status(400).json({ message: "Seats harus berupa array" });
 
     const schedule = await prisma.schedules.findUnique({
       where: { id_schedule: schedule_id },
-      select: { movie_id: true },
+      select: {
+        movie: { select: { id_movie: true, title: true } },
+      },
     });
-    if (!schedule) {
-      return res.status(404).json({ message: "Schedule tidak ditemukan" });
-    }
+    if (!schedule) return res.status(404).json({ message: "Schedule tidak ditemukan" });
 
     const order_id = `ORDER-${Date.now()}`;
-
-    const seatPrice = Math.floor(Number(amount) / seatArray.length);
+    const seatPrice = Math.floor(Number(amount));
     const remainder = Number(amount) - seatPrice * seatArray.length;
 
-    const item_details = seatArray.map((seat_id, idx) => ({
-      id: seat_id,
-      name: `Seat ${seat_id}`,
+    const seatsData = await prisma.seats.findMany({
+      where: { id_seat: { in: seatArray } },
+    });
+
+    const item_details = seatsData.map((seat, idx) => ({
+      id: seat.id_seat,
+      name: `Seat ${seat.seat_number}`,
       price: seatPrice + (idx === 0 ? remainder : 0),
       quantity: 1,
     }));
@@ -59,17 +55,16 @@ export const createTransaction = async (req, res) => {
     const payment = await prisma.payments.create({
       data: {
         user_id,
-        movie_id: schedule.movie_id,
+        movie_id: schedule.movie.id_movie,
         booking_id: booking.id_booking,
         amount: Number(amount),
         payment_type: "midtrans",
         status: "pending",
-        transaction_id: transaction.transaction_id,
         order_id,
         transaction_time: new Date(),
         va_number: transaction.va_numbers?.[0]?.va_number || null,
         qr_code_url: transaction.qr_code_url || null,
-        gross_amount: transaction.gross_amount,
+        gross_amount: transaction.gross_amount || Number(amount),
         midtrans_response: transaction,
       },
     });
@@ -84,6 +79,7 @@ export const createTransaction = async (req, res) => {
     console.error("Error createTransaction:", err);
     return res.status(500).json({
       message: "Gagal membuat transaksi",
+      error: err.message,
     });
   }
 };
