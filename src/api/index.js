@@ -17,7 +17,6 @@ const app = express();
 dotenv.config(); 
 const PORT = process.env.PORT || 2000;
 
-
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser()); 
@@ -33,6 +32,8 @@ app.use(
         credentials: true
     })
 );
+
+app.options("*", cors());
 
 cleanup.start();
 
