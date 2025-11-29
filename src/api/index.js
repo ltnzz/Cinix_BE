@@ -9,6 +9,7 @@ import adminRouter from "../routes/admin.route.js";
 import userRouter from '../routes/user.route.js';
 import seatRouter from '../routes/seatRoutes.js'; 
 import midtransRouter from '../routes/midtrans.route.js';
+import theaterRouter from '../routes/theater.route.js'
 
 import { cleanup } from '../service/cron.js';
 import bodyParser from 'body-parser';
@@ -45,6 +46,7 @@ app.use("/", adminRouter);
 app.use("/", userRouter);
 app.use("/", seatRouter);
 app.use("/", midtransRouter); 
+app.use("/", theaterRouter);
 
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
