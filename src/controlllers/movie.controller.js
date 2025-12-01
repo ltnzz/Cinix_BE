@@ -27,6 +27,45 @@ export const getMoviebyID = async (req, res) => {
         const movie = await prisma.movies.findUnique({
             where: {
                 id_movie: id_movie
+            },
+            select: {
+                // Pilih info film yang penting aja
+                title: true,
+                poster_url: true,
+                genre: true,
+                duration: true,
+                
+                // Masuk ke tabel schedules
+                schedules: {
+                    // Filter: Cuma ambil jadwal masa depan (opsional)
+                    // where: {
+                    //     show_date: {
+                    //         gte: new Date() // gte = greater than or equal (mulai hari ini)
+                    //     }
+                    // },
+                    // Urutkan dari jam paling pagi
+                    orderBy: {
+                        show_time: 'asc'
+                    },
+                    // Pilih kolom schedule yang mau ditampilkan
+                    select: {
+                        id_schedule: true,
+                        show_time: true,
+                        price: true,
+                        
+                        // JOIN LAGI: Ambil nama Theater (Bioskop) & Studio
+                        theater: {
+                            select: {
+                                name: true // Misal: "CGV Grand Indonesia"
+                            }
+                        },
+                        studio: {
+                            select: {
+                                name: true // Misal: "Studio 1"
+                            }
+                        }
+                    }
+                }
             }
         })
 
