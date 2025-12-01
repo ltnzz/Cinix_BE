@@ -19,3 +19,25 @@ export const getAllMovies = async (req, res) => {
         });
     }
 }
+
+export const getMoviebyID = async (req, res) => {
+    try {
+        const { id_movie } = req.params;
+
+        const movie = await prisma.movies.findUnique({
+            where: {
+                id_movie: id_movie
+            }
+        })
+
+        if (!movie) {
+            return res.status(404).json({message: "Movie not found."})
+        }
+
+        return res.status(200).json({ movie })
+        
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({message: "Internal Server Error"})
+    }
+}

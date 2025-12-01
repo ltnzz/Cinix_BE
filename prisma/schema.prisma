@@ -42,6 +42,7 @@ model movies {
   movie_update_by String?
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
+  poster_publicId String?
   payments        payments[]
   schedules       schedules[]
 }
@@ -54,6 +55,7 @@ model theaters {
   updated_at DateTime    @updatedAt
   latitude   Float
   longitude  Float
+  name       String?     @unique
   schedules  schedules[]
   studios    studios[]
 }
@@ -135,7 +137,7 @@ model booking_seats {
 model payments {
   id_payment          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   transaction_id      String?
-  order_id            String?   @unique(map: "payments_order_id_unique")
+  order_id            String?
   user_id             String    @db.Uuid
   movie_id            String    @db.Uuid
   booking_id          String    @db.Uuid

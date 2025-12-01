@@ -54,5 +54,14 @@
     "url": "https://github.com/ltnzz/Cinix_BE/issues"
   },
   "homepage": "https://github.com/ltnzz/Cinix_BE#readme",
-  "description": ""
+  "description": "",
+
+  "editor.quickSuggestions": {
+  "other": true,
+  "comments": true,
+  "strings": true
+},
+"editor.suggestOnTriggerCharacters": true,
+"editor.parameterHints.enabled": true
 }
+
