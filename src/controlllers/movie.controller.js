@@ -30,7 +30,6 @@ export const getMoviebyID = async (req, res) => {
             },
             select: {
                 // Pilih info film yang penting aja
-                id_movie: id_movie,
                 title: true,
                 poster_url: true,
                 genre: true,
