@@ -87,7 +87,7 @@ model schedules {
   updated_at         DateTime   @updatedAt
   bookings           bookings[]
   admin              admins?    @relation(fields: [admin_id], references: [id_admin])
-  movie              movies     @relation(fields: [movie_id], references: [id_movie])
+  movie     movies @relation(fields: [movie_id], references: [id_movie], onDelete: Cascade)
   studio             studios    @relation(fields: [studio_id], references: [id_studio])
   theater            theaters   @relation(fields: [theater_id], references: [id_theater])
 }
