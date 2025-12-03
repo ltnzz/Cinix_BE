@@ -24,8 +24,16 @@ export const createTransaction = async (req, res) => {
     const remainder = Number(amount) - seatPrice * seatArray.length;
 
     const seatsData = await prisma.seats.findMany({
-      where: { id_seat: { in: seatArray } },
+      where: { seat_number: { in: seatArray } }, // Changed from id_seat
     });
+
+    if (seatsData.length !== seatArray.length) {
+      return res.status(404).json({ 
+        message: "Beberapa kursi tidak ditemukan",
+        requested: seatArray.length,
+        found: seatsData.length
+      });
+    }
 
     const item_details = seatsData.map((seat, idx) => ({
       id: seat.id_seat,
@@ -47,7 +55,7 @@ export const createTransaction = async (req, res) => {
         schedule_id,
         total_price: Number(amount),
         bookingSeats: {
-          create: seatArray.map((seat_id) => ({ seat_id })),
+          create: seatsData.map((seat) => ({ seat_id: seat.id_seat })), // Use id_seat from found seats
         },
       },
     });
@@ -71,10 +79,9 @@ export const createTransaction = async (req, res) => {
 
     return res.status(200).json({
       message: "Transaksi berhasil dibuat",
+      token: transaction.token, 
       booking,
       payment,
-      token: transaction_token,
-      redirect_url: transaction.redirect_url,
       snap: transaction,
     });
   } catch (err) {
