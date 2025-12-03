@@ -17,7 +17,8 @@ export const authentication = async (req, res, next) => {
         if (!user) return res.status(401).json({ message: "Unauthorized" });
 
         req.user = {
-            id_user: decoded.id || decoded.id_user, 
+            id_user: decoded.id_user || decoded.id,
+            id: decoded.id || decoded.id_user,
             name: decoded.name,
             email: decoded.email,
             role: decoded.role

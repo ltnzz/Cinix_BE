@@ -4,7 +4,7 @@ import { snap } from "../service/midtrans.js";
 export const createTransaction = async (req, res) => {
   try {
     const { schedule_id, seats, amount } = req.body;
-    const user_id = req.user?.id_user;
+    const user_id = req.user?.id_user || req.user?.id;
     if (!user_id) return res.status(401).json({ message: "Unauthorized" });
     if (!schedule_id || !seats || !amount) return res.status(400).json({ message: "Data tidak lengkap" });
 
