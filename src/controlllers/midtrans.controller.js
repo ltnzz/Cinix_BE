@@ -73,6 +73,8 @@ export const createTransaction = async (req, res) => {
       message: "Transaksi berhasil dibuat",
       booking,
       payment,
+      token: transaction_token,
+      redirect_url: transaction.redirect_url,
       snap: transaction,
     });
   } catch (err) {
