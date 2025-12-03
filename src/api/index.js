@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 app.use(bodyParser.json());
 
-const allowedOrigin = ["https://cinix.vercel.app/", "http://localhost:5173"];
+const allowedOrigin = ["https://cinix.vercel.app", "http://localhost:5173"];
 
 app.use(
     cors({
