@@ -71,7 +71,7 @@ export const createTransaction = async (req, res) => {
         item_details[0].price += (totalAmount - calculatedTotal);
     }
 
-    const order_id = `ORDER-${Date.now()}-${schedule_id}`; // Tambah unik
+    const order_id = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     // 5. Hit ke Midtrans
     const transaction = await snap.createTransaction({
