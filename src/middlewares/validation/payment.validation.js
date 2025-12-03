@@ -7,7 +7,7 @@ export const authentication = async (req, res, next) => {
         console.log(token)
         if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.jwt_secret);
         if (!decoded.id) return res.status(401).json({ message: "Unauthorized" });
 
         const user = await prisma.users.findUnique({
