@@ -11,12 +11,17 @@ export const authentication = async (req, res, next) => {
         if (!decoded.id) return res.status(401).json({ message: "Unauthorized" });
 
         const user = await prisma.users.findUnique({
-        where: { id_user: decoded.id },
+            where: { id_user: decoded.id },
         });
 
         if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-        req.user = user; 
+        req.user = {
+            id_user: decoded.id || decoded.id_user, 
+            name: decoded.name,
+            email: decoded.email,
+            role: decoded.role
+        };
         next();
     } catch (err) {
         console.error("Auth middleware error:", err);
