@@ -56,11 +56,13 @@ export const getMoviebyID = async (req, res) => {
                         // JOIN LAGI: Ambil nama Theater (Bioskop) & Studio
                         theater: {
                             select: {
+                                id_theater: true,
                                 name: true // Misal: "CGV Grand Indonesia"
                             }
                         },
                         studio: {
                             select: {
+                                id_studio: true,
                                 name: true // Misal: "Studio 1"
                             }
                         }
