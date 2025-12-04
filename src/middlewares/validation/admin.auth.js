@@ -3,7 +3,6 @@ import jsonwebtoken from "jsonwebtoken";
 export const adminAuth = (req, res, next) => {
     
     const token = req.cookies.token;
-    console.log("Admin Auth Middleware - Token:", token);
     if (!token) {
         return res.status(401).json({ message: "Not Authenticated as Admin" });
     }
