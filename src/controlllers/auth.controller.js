@@ -268,30 +268,27 @@ export const resetPassword = async (req, res) => {
 };
 
 export const logout = (req, res) => {
-    try {
-        res.clearCookie("connect.sid", {
-            httpOnly: true,
-            secure: true,
-            sameSite: "lax",
-            path: "/",
-        })
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: none,
+        path: "/",
+    };
 
-        res.clearCookie("token", {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            path: "/",
-        });
+    try {
+        res.clearCookie("connect.sid", cookieOptions);
+        res.clearCookie("token", cookieOptions);
 
         return res.status(200).json({
             auth: false,
             message: "Logout berhasil. Sampai jumpa lagi!",
-        })
+        });
+
     } catch (err) {
-        console.error(err);
+        console.error("Logout Error:", err);
         return res.status(500).json({
-        auth: false,
-        message: "Gagal memproses permintaan. Silahkan coba lagi.",
+            auth: false,
+            message: "Gagal memproses logout.",
         });
     }
 };
