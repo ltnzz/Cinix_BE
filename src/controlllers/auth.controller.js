@@ -271,7 +271,7 @@ export const logout = (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: none,
+        sameSite: "none",
         path: "/",
     };
 
