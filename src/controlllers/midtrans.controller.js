@@ -3,13 +3,30 @@ import { snap } from "../service/midtrans.js";
 
 export const createTransaction = async (req, res) => {
   try {
-    const { schedule_id, seats, amount } = req.body;
-    const user_id = req.user?.id_user || req.user?.id;
+    const { 
+        schedule_id, 
+        seats, 
+        amount, 
+        user_id: body_user_id, 
+        user_name, 
+        user_email 
+    } = req.body;
     
+    let final_user_id = req.user?.id_user || req.user?.id;
+
+    if (!final_user_id || final_user_id === 'guest') {
+        final_user_id = body_user_id;
+    }
+    
+    if (!final_user_id || final_user_id === 'guest') {
+        return res.status(401).json({ 
+            message: "Unauthorized: User ID tidak ditemukan atau tidak valid." 
+        });
+    }
+
     const TAX_RATE = 0.11;
     const SERVICE_FEE = 3000;
 
-    if (!user_id) return res.status(401).json({ message: "Unauthorized" });
     if (!schedule_id || !seats || !amount) return res.status(400).json({ message: "Data tidak lengkap" });
 
     let seatArray = Array.isArray(seats) ? seats : seats.split(",");
@@ -35,7 +52,7 @@ export const createTransaction = async (req, res) => {
 
     if (seatsData.length !== seatArray.length) {
       return res.status(404).json({ 
-        message: "Validasi kursi gagal. Beberapa kursi tidak valid.",
+        message: "Validasi kursi gagal. Kursi yang dipilih tidak valid untuk studio ini.",
         found: seatsData.length,
         expected: seatArray.length
       });
@@ -65,7 +82,7 @@ export const createTransaction = async (req, res) => {
 
     if (taxAmount > 0) {
         item_details.push({
-            id: "TAX-11",
+            id: "TAX-PPN",
             name: "PPN 11%",
             price: taxAmount,
             quantity: 1,
@@ -92,15 +109,16 @@ export const createTransaction = async (req, res) => {
       },
       credit_card: { secure: true },
       customer_details: { 
-          id: user_id, 
-          first_name: "Cinix User"
+          id: final_user_id, 
+          first_name: user_name || 'Cinix User', 
+          email: user_email || 'user@cinix.com'
       },
       item_details,
     });
 
     const booking = await prisma.bookings.create({
       data: {
-        user_id,
+        user_id: final_user_id,
         schedule_id,
         total_price: grossAmount,
         bookingSeats: {
@@ -111,16 +129,13 @@ export const createTransaction = async (req, res) => {
 
     const payment = await prisma.payments.create({
       data: {
-        user_id,
+        user_id: final_user_id,
         movie_id: schedule.movie.id_movie,
         booking_id: booking.id_booking,
         amount: grossAmount,
         payment_type: "midtrans",
         status: "pending",
         order_id,
-        transaction_time: new Date(),
-        va_number: transaction.va_numbers?.[0]?.va_number || null,
-        qr_code_url: transaction.qr_code_url || null,
         gross_amount: grossAmount,
         midtrans_response: transaction, 
       },
