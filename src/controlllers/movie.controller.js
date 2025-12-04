@@ -29,41 +29,36 @@ export const getMoviebyID = async (req, res) => {
                 id_movie: id_movie
             },
             select: {
-                // Pilih info film yang penting aja
                 title: true,
                 poster_url: true,
                 genre: true,
                 duration: true,
-                
-                // Masuk ke tabel schedules
+                age_rating: true,
+                language: true,
+                description: true,
                 schedules: {
-                    // Filter: Cuma ambil jadwal masa depan (opsional)
                     // where: {
                     //     show_date: {
-                    //         gte: new Date() // gte = greater than or equal (mulai hari ini)
+                    //         gte: new Date()
                     //     }
                     // },
-                    // Urutkan dari jam paling pagi
-                    orderBy: {
-                        show_time: 'asc'
-                    },
-                    // Pilih kolom schedule yang mau ditampilkan
+                    // orderBy: {
+                    //     show_time: 'asc'
+                    // },
                     select: {
                         id_schedule: true,
                         show_time: true,
                         price: true,
-                        
-                        // JOIN LAGI: Ambil nama Theater (Bioskop) & Studio
                         theater: {
                             select: {
                                 id_theater: true,
-                                name: true // Misal: "CGV Grand Indonesia"
+                                name: true 
                             }
                         },
                         studio: {
                             select: {
                                 id_studio: true,
-                                name: true // Misal: "Studio 1"
+                                name: true
                             }
                         }
                     }
