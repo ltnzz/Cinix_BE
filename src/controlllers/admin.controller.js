@@ -33,6 +33,11 @@ export const adminLogin = async (req, res) => {
 
         return res.json({ 
             message: `Halo ${admin.name}. Selamat datang di dashboard admin.`,
+            token,
+            data: {
+                name: admin.name,
+                email: admin.email,
+            }
         });
     } catch (err) {
         console.error(err);
