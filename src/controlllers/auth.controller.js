@@ -200,7 +200,7 @@ export const forgotPassword = async (req, res) => {
             },
         });
 
-        const resetLink = `${process.env.fe_origin}/auth/reset-password/${reset.token}`;
+        const resetLink = `${process.env.fe_origin}/reset-password/${reset.token}`;
 
         const html = linkEmailTemplate(resetLink, user.name);
 

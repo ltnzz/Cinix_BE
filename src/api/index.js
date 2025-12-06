@@ -18,10 +18,7 @@ const app = express();
 dotenv.config(); 
 const PORT = process.env.PORT || 2000;
 
-app.use(cookieParser()); 
 app.use(express.json()); 
-app.use(express.urlencoded({ extended: true }))
-app.use(bodyParser.json());
 
 const allowedOrigin = ["https://cinix.vercel.app", "http://localhost:5173"];
 
@@ -33,6 +30,10 @@ app.use(
         credentials: true
     })
 );
+
+app.use(cookieParser()); 
+app.use(express.urlencoded({ extended: true }))
+app.use(bodyParser.json());
 
 cleanup.start();
 
