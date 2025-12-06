@@ -36,6 +36,7 @@ export const getMoviebyID = async (req, res) => {
                 age_rating: true,
                 language: true,
                 description: true,
+                trailer_url: true,
                 schedules: {
                     // where: {
                     //     show_date: {
