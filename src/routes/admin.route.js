@@ -49,7 +49,7 @@ router.get('/studios/:id_studio', adminAuth, getStudioDetail);
 router.post('/studios', adminAuth, createStudio);
 router.put('/studios/:id_studio', adminAuth, updateStudio);
 
-router.get('/studios/:id_studio/seats', adminAuth, getSeatsByStudio);
+// router.get('/studios/:id_studio/seats', adminAuth, getSeatsByStudio);
 router.post('/studios/:id_studio/seats/generate', adminAuth, generateSeatsBulk);
 
 router.get('/schedules', adminAuth, getSchedules);
